@@ -1,45 +1,81 @@
 package edu.douglaslima;
 
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
+import java.util.NoSuchElementException;
+import java.util.Optional;
+import java.util.Scanner;
 
+import edu.douglaslima.config.EntityManagerProvider;
 import edu.douglaslima.domain.Pessoa;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.EntityManagerFactory;
-import jakarta.persistence.Persistence;
+import edu.douglaslima.repository.PessoaRepository;
 
 public class App {
-	
-	public static void main(String[] args) {
 
-		EntityManagerFactory emf = Persistence.createEntityManagerFactory("mysql-aulajpa");
-		EntityManager em = emf.createEntityManager();
+	public static void main(String[] args) {
+		Scanner scanner = new Scanner(System.in);
+		int opcao = 0;
 		
-		/*
-		Pessoa p1 = new Pessoa(null, "Douglas", "douglaslima-pro@outlook.com");
-		Pessoa p2 = new Pessoa(null, "Maria", "maria@gmail.com");
-		Pessoa p3 = new Pessoa(null, "Eduardo", "eduardo@gmail.com");
+		do {
+			System.out.println("""
+					--- Sistema de Cadastro de Pessoas ---
+
+					1. Cadastrar
+					2. Pesquisar pelo ID
+					3. Excluir pelo ID
+					4. Sair
+
+					""");
+			System.out.print("Digite o número da sua opção: ");
+			opcao = scanner.nextInt();
+			scanner.nextLine(); // limpa o buffer de entrada
+			System.out.println();
+			
+			switch (opcao) {
+			case 1: {
+				System.out.print("- Insira o nome: ");
+				String nome = scanner.nextLine();
+				System.out.print("- Insira o e-mail: ");
+				String email = scanner.next();
+				Pessoa p = new Pessoa(nome, email);
+				PessoaRepository.getInstance()
+					.save(p);
+				System.out.println("~ Pessoa cadastrada com sucesso!");
+				break;
+			}
+			case 2: {
+				System.out.print("- Digite o ID: ");
+				Integer id = scanner.nextInt();
+				Optional<Pessoa> p = PessoaRepository.getInstance()
+					.findById(id);
+				if (p.isEmpty()) {
+					System.out.println(String.format("Não existe pessoa com o ID %s!", id));
+					break;
+				}
+				System.out.println(p.get());
+				break;
+			}
+			case 3:
+				System.out.print("- Digite o ID: ");
+				Integer id = scanner.nextInt();
+				try {
+					PessoaRepository.getInstance()
+						.deleteById(id);
+					System.out.println("Pessoa excluída com sucesso!");
+				} catch (NoSuchElementException e) {
+					System.out.println(String.format("Não existe pessoa com o ID %s!", id));
+				}
+			case 4:
+				break;
+			default:
+				System.out.println("Opção inválida!");
+			}
+			System.out.println();
+			
+		} while (opcao != 4);
 		
-		em.getTransaction().begin();
-		em.persist(p1);
-		em.persist(p2);
-		em.persist(p3);
-		em.getTransaction().commit();
-		
-		Pessoa p = em.find(Pessoa.class, 3);
-		em.getTransaction().begin();
-		em.remove(p);
-		em.getTransaction().commit();
-		System.out.println(p);
-		*/
-		
-		Map<String, Object> properties = em.getProperties();
-		Set<Entry<String, Object>> propertiesEntries = properties.entrySet();
-		propertiesEntries.forEach(entry -> System.out.println(String.format("%s=%s", entry.getKey(), entry.getValue())));
-		
-		em.close();
-		emf.close();
+		System.out.println("Programa encerrado.");
+		// fecha os recursos
+		scanner.close();
+		EntityManagerProvider.closeEntityManagerFactory();
 	}
-	
+
 }
